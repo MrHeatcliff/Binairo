@@ -1,13 +1,62 @@
-val = [[0,2,2,0,2,0,1,1,0,0],
-       [1,0,0,1,0,0,0,0,0,0],
-       [0,0,0,0,0,0,0,1,0,2],
-       [0,1,2,0,0,1,0,0,0,0],
-       [0,0,0,0,0,1,0,0,1,1],
-       [0,2,1,0,0,0,2,0,2,0],
-       [0,0,0,0,0,0,0,0,0,0],
-       [0,0,1,0,0,0,0,2,0,0],
-       [0,2,0,1,1,0,1,0,0,1],
-       [0,0,0,0,1,0,0,0,0,0]]
+from copy import deepcopy
+from memory_profiler import profile
+import time
+import pyautogui as gui
+
+LAPTOPSCREEN = False
+
+input("Move the mouse to the top left of the grid")
+topLeft = gui.position()
+input("Move the mouse to the bottom right of the grid")
+botRight = gui.position()
+gridRows = int(input("How many rows are in the grid: "))
+gridCols = int(input("How many cols are in the grid: "))
+
+BLACK = (102, 102, 102, 255)
+WHITE = (204, 204, 204, 255)
+EMPTY = (255, 255, 255, 255)
+val = [[0 for j in range(gridCols)] for i in range(gridRows)]
+blackInRow = [0 for i in range(gridRows)]
+blackInCol = [0 for i in range(gridCols)]
+whiteInRow = [0 for i in range(gridRows)]
+whiteInCol = [0 for i in range(gridCols)]
+im = gui.screenshot()
+
+cellWidth = (botRight[0]-topLeft[0])/gridCols
+cellHeight = (botRight[1]-topLeft[1])/gridRows
+
+def readPixel(x, y):
+    if LAPTOPSCREEN:
+        x *= 2
+        y *= 2
+    return im.getpixel((x, y))
+
+def readCellColour(i, j):
+    curX = topLeft[0]+cellWidth/2+cellWidth*j
+    curY = topLeft[1]+cellHeight/2+cellHeight*i
+    cols = []
+    for k in range(-int(cellWidth/4), int(cellWidth/4)+1):
+        for l in range(-int(cellHeight/4), int(cellHeight/4)+1):
+            pixel = readPixel(curX+k, curY+l)
+            ind = -1
+            for x in range(len(cols)):
+                if cols[x][1] == pixel:
+                    ind = x
+                    break
+            if ind == -1:
+                ind = len(cols)
+                cols.append([0, pixel])
+            cols[ind][0] += 1
+    cols.sort(reverse=True)
+    if len(cols) == 1:
+        return 0
+    if cols[0][1][0] < 128:
+        return 1
+    return 2
+
+for i in range(gridRows):
+    for j in range(gridCols):
+        val[i][j] = readCellColour(i, j)
 
 defVal = []
 for x in range(len(val)):
@@ -37,6 +86,25 @@ def check(val):
     return True
 
 def satisfy(i, j, val, board, blackInCol, blackInRow, whiteInCol, whiteInRow):
+    if(j == len(board[0]) - 1):
+        row_i = deepcopy(board[i])
+        row_i[j] = val
+        for index, row in enumerate(board):
+            if row == row_i and index != i:
+                # print("Hang", i, "giong hang", index)
+                row_i[j] = 0
+                return False
+    if (i == len(board) - 1):
+        col_j = [row[j] for row in board]
+        col_j[i] = val
+        for index, col in enumerate(zip(*board)):
+            if list(col) == col_j and index != j:
+                # print(col_j)
+                # print(col)
+                col_j[i] = 0
+                # print("Cot", j, "giong cot", index)
+                return False
+
     if val == 1:
         if blackInCol[j] == len(board[i])/2:
             return False
@@ -187,7 +255,6 @@ def satisfy(i, j, val, board, blackInCol, blackInRow, whiteInCol, whiteInRow):
                 return False
     return True
     
-
 def backtrack(i, j, board, defVal, blackInRow, blackInCol, whiteInRow, whiteInCol):
     if([i, j] not in defVal):
         for x in range(1, 3):
@@ -196,7 +263,7 @@ def backtrack(i, j, board, defVal, blackInRow, blackInCol, whiteInRow, whiteInCo
                 # print(i,j)
                 # print(x)
                 # for n in range(len(board)):
-                    # print(board[n])
+                #     print(board[n])
                 # print()
                 if x == 1:
                     blackInCol[j] += 1
@@ -243,16 +310,22 @@ def backtrack(i, j, board, defVal, blackInRow, blackInCol, whiteInRow, whiteInCo
         return False
     else:
         if j == len(board[i]) - 1:
-            if i == len(board):
+            if i == len(board) - 1:
                 if check(board):
                     return True
             else:
                 return backtrack(i+1, 0, board, defVal, blackInRow, blackInCol, whiteInRow, whiteInCol)
         else:
             return backtrack(i, j+1, board, defVal, blackInRow, blackInCol, whiteInRow, whiteInCol)
-
-if __name__ == "__main__":
-    # print(blackInRow, blackInCol, whiteInRow, whiteInCol)
+        
+@profile
+def main():
     backtrack(0, 0, val, defVal, blackInRow, blackInCol, whiteInRow, whiteInCol)
     for i in range(len(val)):
         print(val[i])
+if __name__ == "__main__":
+    # print(blackInRow, blackInCol, whiteInRow, whiteInCol)
+    startTime = time.time()
+    main()
+    executionTime = time.time() - startTime
+    print("Execution time is:", executionTime)

@@ -1,4 +1,5 @@
 import pyautogui as gui
+from copy import deepcopy
 
 LAPTOPSCREEN = False
 # color channel
@@ -117,6 +118,7 @@ class Game():
             print("-", end='')
         print()
     
+    #constraint about max black or white in a row or column
     def constraint1(self):
         ret = False
         for i in range(self.gridRows):
@@ -130,6 +132,7 @@ class Game():
                         ret = True
         return ret
     
+    #constraint about two black or white cell next to each other => next cell must be reverse color
     def constraint2(self):
         # vertical up
         ret = False
@@ -203,6 +206,20 @@ class Game():
                 return True
             
     def __satisfy(self, i, j, x):
+        if (j == self.gridCols - 1):
+            row_i = deepcopy(self.val[i])
+            row_i[j] = x
+            for index, row in enumerate(self.val):
+                if row == row_i and index != i:
+                    row_i[j] = 0
+                    return False
+        if i == self.gridRows - 1:
+            col_j = [row[j] for row in self.val]
+            col_j[i] = x
+            for index, col in enumerate(zip(*self.val)):
+                if list(col) == col_j and index != j:
+                    col_j[i] = 0
+                    return False
         if x == 1:
             if self.blackInCol[j] == self.gridCols/2:
                 return False
@@ -397,8 +414,8 @@ class Game():
 
 
     def dfs_solve(self):
-        self.check_constrain()
-        self.update_def_val()
+        # self.check_constrain()
+        # self.update_def_val()
         self.__backtrack(0,0)
 
 if __name__ == "__main__":
