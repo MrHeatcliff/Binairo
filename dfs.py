@@ -1,7 +1,7 @@
 from copy import deepcopy
-from memory_profiler import profile
 import time
 import pyautogui as gui
+import tracemalloc
 
 LAPTOPSCREEN = False
 
@@ -255,7 +255,11 @@ def satisfy(i, j, val, board, blackInCol, blackInRow, whiteInCol, whiteInRow):
                 return False
     return True
     
+memory_list = []
+
+
 def backtrack(i, j, board, defVal, blackInRow, blackInCol, whiteInRow, whiteInCol):
+    tracemalloc.start()
     if([i, j] not in defVal):
         for x in range(1, 3):
             if satisfy(i, j, x, board, blackInCol, blackInRow, whiteInCol, whiteInRow):
@@ -276,6 +280,8 @@ def backtrack(i, j, board, defVal, blackInRow, blackInCol, whiteInRow, whiteInCo
                 if j == len(board[i])-1:
                     if i == len(board)-1:
                         if check(board):
+                            memory_list.append(tracemalloc.get_traced_memory()[1])
+                            tracemalloc.stop()
                             return True
                     else:
                         flag = backtrack(i+1, 0, board, defVal, blackInRow, blackInCol, whiteInRow, whiteInCol)
@@ -318,7 +324,6 @@ def backtrack(i, j, board, defVal, blackInRow, blackInCol, whiteInRow, whiteInCo
         else:
             return backtrack(i, j+1, board, defVal, blackInRow, blackInCol, whiteInRow, whiteInCol)
         
-@profile
 def main():
     backtrack(0, 0, val, defVal, blackInRow, blackInCol, whiteInRow, whiteInCol)
     for i in range(len(val)):
@@ -329,3 +334,4 @@ if __name__ == "__main__":
     main()
     executionTime = time.time() - startTime
     print("Execution time is:", executionTime)
+    print("memory:", memory_list)
