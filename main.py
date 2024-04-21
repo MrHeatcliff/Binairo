@@ -118,92 +118,167 @@ class Game():
             print("-", end='')
         print()
     
+    def __set_val_heuristic(self, row, col, value, blackInRow, blackInCol, whiteInRow, whiteInCol):
+        self.val[row][col] = value
+        x = self.topLeft[0] + self.cellWidth/2 + self.cellWidth*col
+        y = self.topLeft[1] + self.cellHeight/2 + self.cellHeight*row
+        if value == 1:
+            gui.click(x, y)
+            self.blackInRow[row] +=1
+            self.blackInCol[col] +=1
+        else:
+            gui.rightClick(x, y)
+            self.whiteInRow[row] +=1
+            self.whiteInCol[col] +=1
+
     #constraint about max black or white in a row or column
-    def constraint1(self):
+    def constraint1(self, board, blackInRow, blackInCol, whiteInRow, whiteInCol):
         ret = False
         for i in range(self.gridRows):
             for j in range(self.gridCols):
-                if self.val[i][j] == 0:
-                    if self.blackInRow[i] == self.gridCols/2 or self.blackInCol[j] == self.gridRows/2:
-                        self.setVal(i, j, 2)
+                if board[i][j] == 0:
+                    if blackInRow[i] == self.gridCols/2 or blackInCol[j] == self.gridRows/2:
+                        self.__set_val_heuristic(i, j, 2, blackInRow, blackInCol, whiteInRow, whiteInCol)
                         ret = True
-                    elif self.whiteInRow[i] == self.gridCols/2 or self.whiteInCol[j] == self.gridRows/2:
-                        self.setVal(i, j, 1)
+                    elif whiteInRow[i] == self.gridCols/2 or whiteInCol[j] == self.gridRows/2:
+                        self.__set_val_heuristic(i, j, 1, blackInRow, blackInCol, whiteInRow, whiteInCol)
                         ret = True
         return ret
     
     #constraint about two black or white cell next to each other => next cell must be reverse color
-    def constraint2(self):
+    def constraint2(self, board, blackInRow, blackInCol, whiteInRow, whiteInCol):
         # vertical up
         ret = False
         for i in range(2, self.gridRows):
             for j in range(self.gridCols):
-                if self.val[i][j] == 0 and self.val[i-1][j] == self.val[i-2][j]:
-                    if self.val[i-1][j] == 1:
-                        self.setVal(i, j, 2)
+                if board[i][j] == 0 and board[i-1][j] == board[i-2][j]:
+                    if board[i-1][j] == 1:
+                        self.__set_val_heuristic(i, j, 2, blackInRow, blackInCol, whiteInRow, whiteInCol)
                         ret = True
-                    elif self.val[i-1][j] == 2:
-                        self.setVal(i, j, 1)
+                    elif board[i-1][j] == 2:
+                        self.__set_val_heuristic(i, j, 1, blackInRow, blackInCol, whiteInRow, whiteInCol)
                         ret = True
         # vertical down
         for i in range(self.gridRows-2):
             for j in range(self.gridCols):
-                if self.val[i][j] == 0 and self.val[i+1][j] == self.val[i+2][j]:
-                    if self.val[i+1][j] == 1:
-                        self.setVal(i, j, 2)
+                if board[i][j] == 0 and board[i+1][j] == board[i+2][j]:
+                    if board[i+1][j] == 1:
+                        self.__set_val_heuristic(i, j, 2, blackInRow, blackInCol, whiteInRow, whiteInCol)
                         ret = True
-                    elif self.val[i+1][j] == 2:
-                        self.setVal(i, j, 1)
+                    elif board[i+1][j] == 2:
+                        self.__set_val_heuristic(i, j, 1, blackInRow, blackInCol, whiteInRow, whiteInCol)
                         ret = True
         # vertical middle
         for i in range(1, self.gridRows-1):
             for j in range(self.gridCols):
-                if self.val[i][j] == 0 and self.val[i-1][j] == self.val[i+1][j]:
-                    if self.val[i+1][j] == 1:
-                        self.setVal(i, j, 2)
+                if board[i][j] == 0 and board[i-1][j] == board[i+1][j]:
+                    if board[i+1][j] == 1:
+                        self.__set_val_heuristic(i, j, 2, blackInRow, blackInCol, whiteInRow, whiteInCol)
                         ret = True
-                    elif self.val[i+1][j] == 2:
-                        self.setVal(i, j, 1)
+                    elif board[i+1][j] == 2:
+                        self.__set_val_heuristic(i, j, 1, blackInRow, blackInCol, whiteInRow, whiteInCol)
                         ret = True
         # horizontal left
         for i in range(self.gridRows):
             for j in range(2, self.gridCols):
-                if self.val[i][j] == 0 and self.val[i][j-1] == self.val[i][j-2]:
-                    if self.val[i][j-1] == 1:
-                        self.setVal(i, j, 2)
+                if board[i][j] == 0 and board[i][j-1] == board[i][j-2]:
+                    if board[i][j-1] == 1:
+                        self.__set_val_heuristic(i, j, 2, blackInRow, blackInCol, whiteInRow, whiteInCol)
                         ret = True
-                    elif self.val[i][j-1] == 2:
-                        self.setVal(i, j, 1)
+                    elif board[i][j-1] == 2:
+                        self.__set_val_heuristic(i, j, 1, blackInRow, blackInCol, whiteInRow, whiteInCol)
                         ret = True
         # horizontal right
         for i in range(self.gridRows):
             for j in range(self.gridCols-2):
-                if self.val[i][j] == 0 and self.val[i][j+1] == self.val[i][j+2]:
-                    if self.val[i][j+1] == 1:
-                        self.setVal(i, j, 2)
+                if board[i][j] == 0 and board[i][j+1] == board[i][j+2]:
+                    if board[i][j+1] == 1:
+                        self.__set_val_heuristic(i, j, 2, blackInRow, blackInCol, whiteInRow, whiteInCol)
                         ret = True
-                    elif self.val[i][j+1] == 2:
-                        self.setVal(i, j, 1)
+                    elif board[i][j+1] == 2:
+                        self.__set_val_heuristic(i, j, 1, blackInRow, blackInCol, whiteInRow, whiteInCol)
                         ret = True
         # horizontal middle
         for i in range(self.gridRows):
             for j in range(1, self.gridCols-1):
-                if self.val[i][j] == 0 and self.val[i][j-1] == self.val[i][j+1]:
-                    if self.val[i][j+1] == 1:
-                        self.setVal(i, j, 2)
+                if board[i][j] == 0 and board[i][j-1] == board[i][j+1]:
+                    if board[i][j+1] == 1:
+                        self.__set_val_heuristic(i, j, 2, blackInRow, blackInCol, whiteInRow, whiteInCol)
                         ret = True
-                    elif self.val[i][j+1] == 2:
-                        self.setVal(i, j, 1)
+                    elif board[i][j+1] == 2:
+                        self.__set_val_heuristic(i, j, 1, blackInRow, blackInCol, whiteInRow, whiteInCol)
                         ret = True
         return ret
     
-    def check_constrain(self):
+    def constraint3(self, board, blackInRow, blackInCol, whiteInRow, whiteInCol):
+        ret = False
+        for i in range(self.gridRows):
+            if blackInRow[i] == self.gridCols/2-1 and whiteInRow[i] < self.gridCols/2-1:
+                for j in range(self.gridCols - 2):
+                    num = 0
+                    for k in range(3):
+                        if board[i][j+k] == 0 or board[i][j+k] == 2:
+                            num += 1
+                    if num == 3:
+                        for k in range(self.gridCols):
+                            if (k < j or k > j+2) and board[i][k] == 0:
+                                if self.__satisfy(i, k, 2):
+                                    self.__set_val_heuristic(i, k, 2, blackInRow, blackInCol, whiteInRow, whiteInCol)
+                                    ret = True
+            elif blackInRow[i] < self.gridCols/2-1 and whiteInRow[i] == self.gridCols/2-1:
+                for j in range(self.gridCols-2):
+                    num = 0
+                    for k in range(3):
+                        if board[i][j+k] == 0 or board[i][j+k] == 1:
+                            num += 1
+                    if num == 3:
+                        for k in range(self.gridCols):
+                            if (k < j or k > j+2) and board[i][k] == 0:
+                                if self.__satisfy(i, k, 1):
+                                    self.__set_val_heuristic(i, k, 1, blackInRow, blackInCol, whiteInRow, whiteInCol)
+                                    ret = True
+        for j in range(self.gridCols):
+            if blackInCol[j] == self.gridRows/2-1 and whiteInCol[j] < self.gridRows/2-1:
+                for i in range(self.gridRows-2):
+                    num = 0
+                    for k in range(3):
+                        if board[i+k][j] == 0 or board[i+k][j] == 2:
+                            num += 1
+                    if num == 3:
+                        for k in range(self.gridRows):
+                            if (k < i or k > i+2) and board[k][j] == 0:
+                                if self.__satisfy(k, j, 2):
+                                    self.__set_val_heuristic(k, j, 2, blackInRow, blackInCol, whiteInRow, whiteInCol)
+                                    ret = True
+            elif blackInCol[j] < self.gridRows/2-1 and whiteInCol[j] == self.gridRows/2-1:
+                for i in range(self.gridRows-2):
+                    num = 0
+                    for k in range(3):
+                        if board[i+k][j] == 0 or board[i+k][j] == 1:
+                            num += 1
+                    if num == 3:
+                        for k in range(self.gridRows):
+                            if (k < i or k > i+2) and board[k][j] == 0:
+                                if self.__satisfy(i, k, 1):
+                                    self.__set_val_heuristic(k, j, 1, blackInRow, blackInCol, whiteInRow, whiteInCol)
+                                    ret = True
+        return ret
+    
+    def constraint_checking(self, board, blackInRow, blackInCol, whiteInRow, whiteInCol):
         while True:
             change = False
-            change = change or self.constraint1()
-            change = change or self.constraint2()
-            if change == False:
-                return True
+            change = change or self.constraint1(board, blackInRow, blackInCol, whiteInRow, whiteInCol)
+            change = change or self.constraint2(board, blackInRow, blackInCol, whiteInRow, whiteInCol)
+            change = change or self.constraint3(board, blackInRow, blackInCol, whiteInRow, whiteInCol)
+            if not change:
+                break
+        finished = True
+        for i in range(self.gridRows):
+            for j in range(self.gridCols):
+                if board[i][j] == 0:
+                    finished = False
+                    return finished
+        return finished
             
     def __satisfy(self, i, j, x):
         if (j == self.gridCols - 1):
@@ -418,8 +493,20 @@ class Game():
         # self.update_def_val()
         self.__backtrack(0,0)
 
+    def heuristic_solve(self):
+        finished = self.constraint_checking(self.val, self.blackInRow, self.blackInCol, self.whiteInRow, self.whiteInCol)
+        if not finished:
+            self.defaultVal = []
+            for x in range(self.gridRows):
+                for y in range(self.gridCols):
+                    if self.val[x][y] != 0:
+                        self.defaultVal.append([x,y])
+            finished = self.__backtrack(0,0)
+            return finished
+
 if __name__ == "__main__":
 
     board = Game()
-    board.dfs_solve()
+    # board.dfs_solve()
+    board.heuristic_solve()
     board.printGrid()
